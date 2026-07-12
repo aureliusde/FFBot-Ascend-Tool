@@ -48,10 +48,10 @@
         </div>
     </div>
 
-    <button onclick="calculateTargets()">Calculate Next Ascension Targets</button>
+    <button onclick="calculateTargets()">Calculate Targets & Recommendation</button>
 
     <div id="result" class="result">
-        <h2 style="margin-top:0; color:#00d4ff;">Result</h2>
+        <h2 style="margin-top:0; color:#00d4ff;">Current Multiplier & Targets</h2>
         <div id="recommendation"></div>
     </div>
 </div>
@@ -76,13 +76,29 @@ function calculateTargets() {
     if (ng >= 150) { minMult = 2.4; maxMult = 2.8; advice = "Very high NG+. Aim for strong runs (2.4x+)."; }
     else if (ng >= 100) { minMult = 2.2; maxMult = 2.5; advice = "High NG+. Be patient — 2.2x+ recommended."; }
     else if (ng >= 50) { minMult = 2.0; maxMult = 2.3; advice = "Mid NG+. 2.1x–2.3x is solid."; }
-    else { advice = "Early NG+. You can ascend at 1.9x–2.1x if the run feels good."; }
+    else { advice = "Early NG+. You can ascend at 1.8x–2.1x if the run feels good."; }
 
-    let rec = `<strong>Current Multiplier:</strong> ${mult_atk}x ATK | ${mult_hp}x HP<br><br>`;
-    rec += `<strong>Recommended for NG+${ng}:</strong> ${minMult.toFixed(1)}x – ${maxMult.toFixed(1)}x multiplier<br><br>`;
-    rec += `<strong>Advice:</strong> ${advice}`;
+    const targets = {
+        "1.8x": { atk: Math.round(base_atk * 1.8), hp: Math.round(base_hp * 1.8) },
+        "2.0x": { atk: Math.round(base_atk * 2.0), hp: Math.round(base_hp * 2.0) },
+        "2.2x": { atk: Math.round(base_atk * 2.2), hp: Math.round(base_hp * 2.2) },
+        "2.3x": { atk: Math.round(base_atk * 2.3), hp: Math.round(base_hp * 2.3) },
+        "2.5x": { atk: Math.round(base_atk * 2.5), hp: Math.round(base_hp * 2.5) }
+    };
 
-    document.getElementById('recommendation').innerHTML = rec;
+    let html = `<strong>Current Multiplier:</strong> ${mult_atk}x ATK | ${mult_hp}x HP<br><br>`;
+    html += `<strong>Recommended for NG+${ng}:</strong> ${minMult.toFixed(1)}x – ${maxMult.toFixed(1)}x<br><br>`;
+    html += `<strong>Target Stats at 100 Wins:</strong><br>`;
+
+    html += `1.8x → ATK ${targets["1.8x"].atk.toLocaleString()} | HP ${targets["1.8x"].hp.toLocaleString()}<br>`;
+    html += `2.0x → ATK ${targets["2.0x"].atk.toLocaleString()} | HP ${targets["2.0x"].hp.toLocaleString()}<br>`;
+    html += `2.2x → ATK ${targets["2.2x"].atk.toLocaleString()} | HP ${targets["2.2x"].hp.toLocaleString()}<br>`;
+    html += `2.3x → ATK ${targets["2.3x"].atk.toLocaleString()} | HP ${targets["2.3x"].hp.toLocaleString()}<br>`;
+    html += `2.5x → ATK ${targets["2.5x"].atk.toLocaleString()} | HP ${targets["2.5x"].hp.toLocaleString()}<br><br>`;
+
+    html += `<strong>Recommendation:</strong> ${advice}`;
+
+    document.getElementById('recommendation').innerHTML = html;
     document.getElementById('result').classList.add('show');
 }
 </script>
