@@ -7,16 +7,13 @@
     body { font-family: Arial, sans-serif; max-width: 1000px; margin: 40px auto; padding: 20px; background: #1a1a2e; color: #eee; }
     h1 { color: #00d4ff; text-align: center; }
     .container { background: #16213e; padding: 30px; border-radius: 12px; box-shadow: 0 0 20px rgba(0,212,255,0.2); }
-    label { display: block; margin: 8px 0 5px; font-weight: bold; color: #00d4ff; }
+    label { display: block; margin: 10px 0 5px; font-weight: bold; color: #00d4ff; }
     input, select { width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 6px; border: none; background: #0f3460; color: white; font-size: 16px; }
     button { background: #00d4ff; color: #1a1a2e; padding: 14px 30px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 15px; }
     button:hover { background: #00b8e0; }
     .result { background: #0f3460; padding: 25px; border-radius: 10px; margin-top: 30px; display: none; }
     .result.show { display: block; }
     .good { color: #4ade80; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { padding: 12px; text-align: center; border: 1px solid #334155; }
-    th { background: #0f3460; }
 </style>
 </head>
 <body>
@@ -54,7 +51,7 @@
     <button onclick="calculateTargets()">Calculate Next Ascension Targets</button>
 
     <div id="result" class="result">
-        <h2 style="margin-top:0; color:#00d4ff;">Current Multiplier & Recommendation</h2>
+        <h2 style="margin-top:0; color:#00d4ff;">Result</h2>
         <div id="recommendation"></div>
     </div>
 </div>
@@ -79,10 +76,11 @@ function calculateTargets() {
     if (ng >= 150) { minMult = 2.4; maxMult = 2.8; advice = "Very high NG+. Aim for strong runs (2.4x+)."; }
     else if (ng >= 100) { minMult = 2.2; maxMult = 2.5; advice = "High NG+. Be patient — 2.2x+ recommended."; }
     else if (ng >= 50) { minMult = 2.0; maxMult = 2.3; advice = "Mid NG+. 2.1x–2.3x is solid."; }
+    else { advice = "Early NG+. You can ascend at 1.9x–2.1x if the run feels good."; }
 
     let rec = `<strong>Current Multiplier:</strong> ${mult_atk}x ATK | ${mult_hp}x HP<br><br>`;
-    rec += `<strong>Recommended for NG+${ng}:</strong> ${minMult.toFixed(1)}x – ${maxMult.toFixed(1)}x<br><br>`;
-    rec += advice;
+    rec += `<strong>Recommended for NG+${ng}:</strong> ${minMult.toFixed(1)}x – ${maxMult.toFixed(1)}x multiplier<br><br>`;
+    rec += `<strong>Advice:</strong> ${advice}`;
 
     document.getElementById('recommendation').innerHTML = rec;
     document.getElementById('result').classList.add('show');
