@@ -13,10 +13,10 @@
     button:hover { background: #00b8e0; }
     .result { background: #0f3460; padding: 25px; border-radius: 10px; margin-top: 30px; display: none; }
     .result.show { display: block; }
-    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-    th, td { padding: 14px; text-align: center; border: 1px solid #334155; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 12px; text-align: center; border: 1px solid #334155; }
     th { background: #0f3460; }
-    .green { background: #14532d; color: #4ade80; font-weight: bold; }
+    .green { background: #14532d; color: #4ade80; }
     .yellow { background: #78350f; color: #fcd34d; }
     .red { background: #7f1d1d; color: #f87171; }
 </style>
@@ -59,12 +59,48 @@
         <h2 style="margin-top:0; color:#00d4ff;">Targets & Recommendation</h2>
         <div id="recommendation"></div>
         
-        <table id="targetTable"></table>
+        <table id="targetTable">
+            <tr>
+                <th>Multiplier</th>
+                <th>ATK Target</th>
+                <th>HP Target</th>
+                <th>Status</th>
+            </tr>
+        </table>
     </div>
 </div>
 
 <script>
+// Load saved data
+function loadSavedData() {
+    const saved = localStorage.getItem('ffbot_last_input');
+    if (saved) {
+        const data = JSON.parse(saved);
+        document.getElementById('ng').value = data.ng || 40;
+        document.getElementById('role').value = data.role || 'dd';
+        document.getElementById('base_atk').value = data.base_atk || 137000;
+        document.getElementById('base_mag').value = data.base_mag || 127000;
+        document.getElementById('base_spi').value = data.base_spi || 127000;
+        document.getElementById('base_hp').value = data.base_hp || 331000;
+    }
+}
+
+// Save data
+function saveData() {
+    const data = {
+        ng: document.getElementById('ng').value,
+        role: document.getElementById('role').value,
+        base_atk: document.getElementById('base_atk').value,
+        base_mag: document.getElementById('base_mag').value,
+        base_spi: document.getElementById('base_spi').value,
+        base_hp: document.getElementById('base_hp').value
+    };
+    localStorage.setItem('ffbot_last_input', JSON.stringify(data));
+}
+
 function calculateTargets() {
+    saveData(); // Save input automatically
+
     const ng = parseInt(document.getElementById('ng').value) || 0;
     const base_atk = parseInt(document.getElementById('base_atk').value) || 1;
     const base_hp = parseInt(document.getElementById('base_hp').value) || 1;
@@ -72,22 +108,24 @@ function calculateTargets() {
     const curr_atk = parseInt(document.getElementById('curr_atk').value) || 0;
     const curr_hp = parseInt(document.getElementById('curr_hp').value) || 0;
 
-    let mult_atk = curr_atk > 0 ? (curr_atk / base_atk).toFixed(2) : null;
-    let mult_hp = curr_hp > 0 ? (curr_hp / base_hp).toFixed(2) : null;
+    const hasCurrent = curr_atk > 0 && curr_hp > 0;
 
     let minMult = ng >= 150 ? 2.4 : ng >= 100 ? 2.2 : ng >= 50 ? 2.0 : 1.8;
+    let maxMult = ng >= 150 ? 2.8 : ng >= 100 ? 2.5 : ng >= 50 ? 2.3 : 2.1;
 
     const targets = {
-        "1.8x": { mult: 1.8, atk: Math.round(base_atk * 1.8), hp: Math.round(base_hp * 1.8) },
-        "2.0x": { mult: 2.0, atk: Math.round(base_atk * 2.0), hp: Math.round(base_hp * 2.0) },
-        "2.2x": { mult: 2.2, atk: Math.round(base_atk * 2.2), hp: Math.round(base_hp * 2.2) },
-        "2.3x": { mult: 2.3, atk: Math.round(base_atk * 2.3), hp: Math.round(base_hp * 2.3) },
-        "2.5x": { mult: 2.5, atk: Math.round(base_atk * 2.5), hp: Math.round(base_hp * 2.5) }
+        "1.8x": { atk: Math.round(base_atk * 1.8), hp: Math.round(base_hp * 1.8) },
+        "2.0x": { atk: Math.round(base_atk * 2.0), hp: Math.round(base_hp * 2.0) },
+        "2.2x": { atk: Math.round(base_atk * 2.2), hp: Math.round(base_hp * 2.2) },
+        "2.3x": { atk: Math.round(base_atk * 2.3), hp: Math.round(base_hp * 2.3) },
+        "2.5x": { atk: Math.round(base_atk * 2.5), hp: Math.round(base_hp * 2.5) }
     };
 
-    let html = `<strong>Recommended Multiplier for NG+${ng}:</strong> ${minMult.toFixed(1)}x – 2.5x<br><br>`;
+    let html = `<strong>Recommended for NG+${ng}:</strong> ${minMult.toFixed(1)}x – ${maxMult.toFixed(1)}x<br><br>`;
 
-    if (mult_atk) {
+    if (hasCurrent) {
+        const mult_atk = (curr_atk / base_atk).toFixed(2);
+        const mult_hp = (curr_hp / base_hp).toFixed(2);
         html += `<strong>Current Multiplier:</strong> ${mult_atk}x ATK | ${mult_hp}x HP<br><br>`;
     }
 
@@ -95,36 +133,22 @@ function calculateTargets() {
 
     Object.keys(targets).forEach(key => {
         const t = targets[key];
-        let status = '';
-        let colorClass = '';
+        let status = '', color = '';
 
-        if (mult_atk) {
-            const current = parseFloat(mult_atk);
-            if (current >= t.mult + 0.15) {
-                status = '✅ Ideal';
-                colorClass = 'green';
-            } else if (current >= t.mult - 0.1) {
-                status = '⚠️ Okay';
-                colorClass = 'yellow';
-            } else {
-                status = '❌ Too early';
-                colorClass = 'red';
-            }
+        const targetVal = parseFloat(key);
+
+        if (hasCurrent) {
+            const currentVal = parseFloat((curr_atk / base_atk).toFixed(2));
+            if (currentVal >= targetVal + 0.1) { status = '✅ Ideal'; color = 'green'; }
+            else if (currentVal >= targetVal - 0.2) { status = '⚠️ Okay'; color = 'yellow'; }
+            else { status = '❌ Too early'; color = 'red'; }
         } else {
-            // No current stats → only highlight recommended range
-            if (t.mult >= minMult && t.mult <= 2.3) {
-                status = 'Recommended';
-                colorClass = 'green';
-            } else if (t.mult < minMult) {
-                status = 'Too early';
-                colorClass = 'red';
-            } else {
-                status = 'Strong';
-                colorClass = 'yellow';
-            }
+            if (targetVal >= minMult && targetVal <= maxMult) { status = '✅ Recommended'; color = 'green'; }
+            else if (targetVal < minMult) { status = '❌ Too low'; color = 'red'; }
+            else { status = '⚠️ Possible'; color = 'yellow'; }
         }
 
-        tableHTML += `<tr class="${colorClass}">
+        tableHTML += `<tr class="${color}">
             <td><strong>${key}</strong></td>
             <td>${t.atk.toLocaleString()}</td>
             <td>${t.hp.toLocaleString()}</td>
@@ -136,6 +160,20 @@ function calculateTargets() {
     document.getElementById('recommendation').innerHTML = html;
     document.getElementById('result').classList.add('show');
 }
+
+// Load saved data when page opens
+window.onload = () => {
+    const saved = localStorage.getItem('ffbot_input');
+    if (saved) {
+        const d = JSON.parse(saved);
+        document.getElementById('ng').value = d.ng || 40;
+        document.getElementById('role').value = d.role || 'dd';
+        document.getElementById('base_atk').value = d.base_atk || 137000;
+        document.getElementById('base_mag').value = d.base_mag || 127000;
+        document.getElementById('base_spi').value = d.base_spi || 127000;
+        document.getElementById('base_hp').value = d.base_hp || 331000;
+    }
+};
 </script>
 </body>
 </html>
