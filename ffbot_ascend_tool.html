@@ -14,9 +14,9 @@
     .result { background: #0f3460; padding: 25px; border-radius: 10px; margin-top: 30px; display: none; }
     .result.show { display: block; }
     table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-    th, td { padding: 12px; text-align: center; border: 1px solid #334155; }
+    th, td { padding: 14px; text-align: center; border: 1px solid #334155; }
     th { background: #0f3460; }
-    .green { background: #14532d; color: #4ade80; }
+    .green { background: #14532d; color: #4ade80; font-weight: bold; }
     .yellow { background: #78350f; color: #fcd34d; }
     .red { background: #7f1d1d; color: #f87171; }
 </style>
@@ -59,14 +59,7 @@
         <h2 style="margin-top:0; color:#00d4ff;">Targets & Recommendation</h2>
         <div id="recommendation"></div>
         
-        <table id="targetTable">
-            <tr>
-                <th>Multiplier</th>
-                <th>ATK Target</th>
-                <th>HP Target</th>
-                <th>Status</th>
-            </tr>
-        </table>
+        <table id="targetTable"></table>
     </div>
 </div>
 
@@ -85,11 +78,11 @@ function calculateTargets() {
     let minMult = ng >= 150 ? 2.4 : ng >= 100 ? 2.2 : ng >= 50 ? 2.0 : 1.8;
 
     const targets = {
-        "1.8x": { atk: Math.round(base_atk * 1.8), hp: Math.round(base_hp * 1.8) },
-        "2.0x": { atk: Math.round(base_atk * 2.0), hp: Math.round(base_hp * 2.0) },
-        "2.2x": { atk: Math.round(base_atk * 2.2), hp: Math.round(base_hp * 2.2) },
-        "2.3x": { atk: Math.round(base_atk * 2.3), hp: Math.round(base_hp * 2.3) },
-        "2.5x": { atk: Math.round(base_atk * 2.5), hp: Math.round(base_hp * 2.5) }
+        "1.8x": { mult: 1.8, atk: Math.round(base_atk * 1.8), hp: Math.round(base_hp * 1.8) },
+        "2.0x": { mult: 2.0, atk: Math.round(base_atk * 2.0), hp: Math.round(base_hp * 2.0) },
+        "2.2x": { mult: 2.2, atk: Math.round(base_atk * 2.2), hp: Math.round(base_hp * 2.2) },
+        "2.3x": { mult: 2.3, atk: Math.round(base_atk * 2.3), hp: Math.round(base_hp * 2.3) },
+        "2.5x": { mult: 2.5, atk: Math.round(base_atk * 2.5), hp: Math.round(base_hp * 2.5) }
     };
 
     let html = `<strong>Recommended Multiplier for NG+${ng}:</strong> ${minMult.toFixed(1)}x – 2.5x<br><br>`;
@@ -98,32 +91,40 @@ function calculateTargets() {
         html += `<strong>Current Multiplier:</strong> ${mult_atk}x ATK | ${mult_hp}x HP<br><br>`;
     }
 
-    // Table
-    let tableHTML = `
-        <tr><th>Multiplier</th><th>ATK Target</th><th>HP Target</th><th>Status</th></tr>
-    `;
+    let tableHTML = `<tr><th>Multiplier</th><th>ATK Target</th><th>HP Target</th><th>Status</th></tr>`;
 
     Object.keys(targets).forEach(key => {
         const t = targets[key];
         let status = '';
-        let color = '';
+        let colorClass = '';
 
         if (mult_atk) {
-            const currentMult = parseFloat(mult_atk);
-            const targetMult = parseFloat(key);
-            if (currentMult >= targetMult + 0.1) {
+            const current = parseFloat(mult_atk);
+            if (current >= t.mult + 0.15) {
                 status = '✅ Ideal';
-                color = 'green';
-            } else if (currentMult >= targetMult - 0.2) {
+                colorClass = 'green';
+            } else if (current >= t.mult - 0.1) {
                 status = '⚠️ Okay';
-                color = 'yellow';
+                colorClass = 'yellow';
             } else {
                 status = '❌ Too early';
-                color = 'red';
+                colorClass = 'red';
+            }
+        } else {
+            // No current stats → only highlight recommended range
+            if (t.mult >= minMult && t.mult <= 2.3) {
+                status = 'Recommended';
+                colorClass = 'green';
+            } else if (t.mult < minMult) {
+                status = 'Too early';
+                colorClass = 'red';
+            } else {
+                status = 'Strong';
+                colorClass = 'yellow';
             }
         }
 
-        tableHTML += `<tr class="${color}">
+        tableHTML += `<tr class="${colorClass}">
             <td><strong>${key}</strong></td>
             <td>${t.atk.toLocaleString()}</td>
             <td>${t.hp.toLocaleString()}</td>
