@@ -13,7 +13,12 @@
     button:hover { background: #00b8e0; }
     .result { background: #0f3460; padding: 25px; border-radius: 10px; margin-top: 30px; display: none; }
     .result.show { display: block; }
-    .good { color: #4ade80; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    th, td { padding: 12px; text-align: center; border: 1px solid #334155; }
+    th { background: #0f3460; }
+    .green { background: #14532d; color: #4ade80; }
+    .yellow { background: #78350f; color: #fcd34d; }
+    .red { background: #7f1d1d; color: #f87171; }
 </style>
 </head>
 <body>
@@ -51,35 +56,33 @@
     <button onclick="calculateTargets()">Calculate Targets & Recommendation</button>
 
     <div id="result" class="result">
-        <h2 style="margin-top:0; color:#00d4ff;">Result</h2>
+        <h2 style="margin-top:0; color:#00d4ff;">Targets & Recommendation</h2>
         <div id="recommendation"></div>
+        
+        <table id="targetTable">
+            <tr>
+                <th>Multiplier</th>
+                <th>ATK Target</th>
+                <th>HP Target</th>
+                <th>Status</th>
+            </tr>
+        </table>
     </div>
 </div>
 
 <script>
 function calculateTargets() {
     const ng = parseInt(document.getElementById('ng').value) || 0;
-    const role = document.getElementById('role').value;
-
     const base_atk = parseInt(document.getElementById('base_atk').value) || 1;
     const base_hp = parseInt(document.getElementById('base_hp').value) || 1;
 
     const curr_atk = parseInt(document.getElementById('curr_atk').value) || 0;
     const curr_hp = parseInt(document.getElementById('curr_hp').value) || 0;
 
-    let mult_atk = "", mult_hp = "";
-    if (curr_atk > 0 && curr_hp > 0) {
-        mult_atk = (curr_atk / base_atk).toFixed(2);
-        mult_hp = (curr_hp / base_hp).toFixed(2);
-    }
+    let mult_atk = curr_atk > 0 ? (curr_atk / base_atk).toFixed(2) : null;
+    let mult_hp = curr_hp > 0 ? (curr_hp / base_hp).toFixed(2) : null;
 
-    let minMult = 1.8, maxMult = 2.2;
-    let advice = "";
-
-    if (ng >= 150) { minMult = 2.4; maxMult = 2.8; advice = "Very high NG+. Aim for strong runs (2.4x+)."; }
-    else if (ng >= 100) { minMult = 2.2; maxMult = 2.5; advice = "High NG+. Be patient — 2.2x+ recommended."; }
-    else if (ng >= 50) { minMult = 2.0; maxMult = 2.3; advice = "Mid NG+. 2.1x–2.3x is solid."; }
-    else { advice = "Early NG+. You can ascend at 1.8x–2.1x if the run feels good."; }
+    let minMult = ng >= 150 ? 2.4 : ng >= 100 ? 2.2 : ng >= 50 ? 2.0 : 1.8;
 
     const targets = {
         "1.8x": { atk: Math.round(base_atk * 1.8), hp: Math.round(base_hp * 1.8) },
@@ -89,21 +92,46 @@ function calculateTargets() {
         "2.5x": { atk: Math.round(base_atk * 2.5), hp: Math.round(base_hp * 2.5) }
     };
 
-    let html = "";
+    let html = `<strong>Recommended Multiplier for NG+${ng}:</strong> ${minMult.toFixed(1)}x – 2.5x<br><br>`;
+
     if (mult_atk) {
         html += `<strong>Current Multiplier:</strong> ${mult_atk}x ATK | ${mult_hp}x HP<br><br>`;
     }
-    html += `<strong>Recommended for NG+${ng}:</strong> ${minMult.toFixed(1)}x – ${maxMult.toFixed(1)}x<br><br>`;
-    html += `<strong>Target Stats at 100 Wins:</strong><br>`;
 
-    html += `1.8x → ATK ${targets["1.8x"].atk.toLocaleString()} | HP ${targets["1.8x"].hp.toLocaleString()}<br>`;
-    html += `2.0x → ATK ${targets["2.0x"].atk.toLocaleString()} | HP ${targets["2.0x"].hp.toLocaleString()}<br>`;
-    html += `2.2x → ATK ${targets["2.2x"].atk.toLocaleString()} | HP ${targets["2.2x"].hp.toLocaleString()}<br>`;
-    html += `2.3x → ATK ${targets["2.3x"].atk.toLocaleString()} | HP ${targets["2.3x"].hp.toLocaleString()}<br>`;
-    html += `2.5x → ATK ${targets["2.5x"].atk.toLocaleString()} | HP ${targets["2.5x"].hp.toLocaleString()}<br><br>`;
+    // Table
+    let tableHTML = `
+        <tr><th>Multiplier</th><th>ATK Target</th><th>HP Target</th><th>Status</th></tr>
+    `;
 
-    html += `<strong>Recommendation:</strong> ${advice}`;
+    Object.keys(targets).forEach(key => {
+        const t = targets[key];
+        let status = '';
+        let color = '';
 
+        if (mult_atk) {
+            const currentMult = parseFloat(mult_atk);
+            const targetMult = parseFloat(key);
+            if (currentMult >= targetMult + 0.1) {
+                status = '✅ Ideal';
+                color = 'green';
+            } else if (currentMult >= targetMult - 0.2) {
+                status = '⚠️ Okay';
+                color = 'yellow';
+            } else {
+                status = '❌ Too early';
+                color = 'red';
+            }
+        }
+
+        tableHTML += `<tr class="${color}">
+            <td><strong>${key}</strong></td>
+            <td>${t.atk.toLocaleString()}</td>
+            <td>${t.hp.toLocaleString()}</td>
+            <td>${status}</td>
+        </tr>`;
+    });
+
+    document.getElementById('targetTable').innerHTML = tableHTML;
     document.getElementById('recommendation').innerHTML = html;
     document.getElementById('result').classList.add('show');
 }
