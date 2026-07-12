@@ -4,7 +4,7 @@ A clean, offline browser tool to help you decide **when to ascend** and **what s
 
 ## Live Demo
 
-**[Open FFBot Ascension Tool →](https://zenithaether.github.io/FFBot-Ascend-Tool/ffbot_ascend_tool.html)**
+**[Open FFBot Ascension Tool →](https://aureliusde.github.io/FFBot-Ascend-Tool/ffbot_ascend_tool.html)**
 
 ## Features
 
@@ -34,7 +34,7 @@ The tool will instantly show you:
 
 ## Contributing
 
-Feel free to fork and improve the tool! Suggestions and pull requests are welcome.
+Feel free to fork the project and submit improvements!
 
 ---
 
