@@ -39,19 +39,19 @@
             <div><label>HP</label><input type="number" id="base_hp" value="331000"></div>
         </div>
 
-        <h3>Current Stats (This Run)</h3>
+        <h3>Current Stats (This Run) - Optional</h3>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
-            <div><label>ATK</label><input type="number" id="curr_atk" value="244000"></div>
-            <div><label>MAG</label><input type="number" id="curr_mag" value="232000"></div>
-            <div><label>SPI</label><input type="number" id="curr_spi" value="232000"></div>
-            <div><label>HP</label><input type="number" id="curr_hp" value="615000"></div>
+            <div><label>ATK</label><input type="number" id="curr_atk" placeholder="optional"></div>
+            <div><label>MAG</label><input type="number" id="curr_mag" placeholder="optional"></div>
+            <div><label>SPI</label><input type="number" id="curr_spi" placeholder="optional"></div>
+            <div><label>HP</label><input type="number" id="curr_hp" placeholder="optional"></div>
         </div>
     </div>
 
     <button onclick="calculateTargets()">Calculate Targets & Recommendation</button>
 
     <div id="result" class="result">
-        <h2 style="margin-top:0; color:#00d4ff;">Current Multiplier & Targets</h2>
+        <h2 style="margin-top:0; color:#00d4ff;">Result</h2>
         <div id="recommendation"></div>
     </div>
 </div>
@@ -67,8 +67,11 @@ function calculateTargets() {
     const curr_atk = parseInt(document.getElementById('curr_atk').value) || 0;
     const curr_hp = parseInt(document.getElementById('curr_hp').value) || 0;
 
-    const mult_atk = (curr_atk / base_atk).toFixed(2);
-    const mult_hp = (curr_hp / base_hp).toFixed(2);
+    let mult_atk = "", mult_hp = "";
+    if (curr_atk > 0 && curr_hp > 0) {
+        mult_atk = (curr_atk / base_atk).toFixed(2);
+        mult_hp = (curr_hp / base_hp).toFixed(2);
+    }
 
     let minMult = 1.8, maxMult = 2.2;
     let advice = "";
@@ -86,7 +89,10 @@ function calculateTargets() {
         "2.5x": { atk: Math.round(base_atk * 2.5), hp: Math.round(base_hp * 2.5) }
     };
 
-    let html = `<strong>Current Multiplier:</strong> ${mult_atk}x ATK | ${mult_hp}x HP<br><br>`;
+    let html = "";
+    if (mult_atk) {
+        html += `<strong>Current Multiplier:</strong> ${mult_atk}x ATK | ${mult_hp}x HP<br><br>`;
+    }
     html += `<strong>Recommended for NG+${ng}:</strong> ${minMult.toFixed(1)}x – ${maxMult.toFixed(1)}x<br><br>`;
     html += `<strong>Target Stats at 100 Wins:</strong><br>`;
 
