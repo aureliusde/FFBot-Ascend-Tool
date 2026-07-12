@@ -4,18 +4,15 @@
 <meta charset="UTF-8">
 <title>FFBot Ascension Tool</title>
 <style>
-    body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; background: #1a1a2e; color: #eee; }
+    body { font-family: Arial, sans-serif; max-width: 1000px; margin: 40px auto; padding: 20px; background: #1a1a2e; color: #eee; }
     h1 { color: #00d4ff; text-align: center; }
     .container { background: #16213e; padding: 30px; border-radius: 12px; box-shadow: 0 0 20px rgba(0,212,255,0.2); }
-    .section { margin-bottom: 25px; }
-    label { display: block; margin-bottom: 6px; font-weight: bold; color: #00d4ff; }
-    input, select { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: none; background: #0f3460; color: white; font-size: 16px; }
-    button { background: #00d4ff; color: #1a1a2e; padding: 14px 30px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; }
+    label { display: block; margin: 8px 0 5px; font-weight: bold; color: #00d4ff; }
+    input, select { width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 6px; border: none; background: #0f3460; color: white; font-size: 16px; }
+    button { background: #00d4ff; color: #1a1a2e; padding: 14px 30px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 15px; }
     button:hover { background: #00b8e0; }
     .result { background: #0f3460; padding: 25px; border-radius: 10px; margin-top: 30px; display: none; }
     .result.show { display: block; }
-    .target { background: #1a1a2e; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 5px solid #00d4ff; }
-    .warning { color: #ff6b6b; font-weight: bold; }
     .good { color: #4ade80; }
     table { width: 100%; border-collapse: collapse; margin-top: 15px; }
     th, td { padding: 12px; text-align: center; border: 1px solid #334155; }
@@ -25,164 +22,69 @@
 <body>
 <div class="container">
     <h1>FFBot Ascension Tool</h1>
-    <p style="text-align:center; color:#aaa;">Helps you decide when to ascend next and what stats to aim for</p>
 
     <div class="section">
         <label>Current NG+</label>
-        <input type="number" id="ng" value="30" min="0">
+        <input type="number" id="ng" value="40" min="0">
 
-        <label>Your Role</label>
+        <label>Role</label>
         <select id="role">
             <option value="dd">Damage Dealer (DD)</option>
             <option value="tank">Tank</option>
             <option value="healer">Healer</option>
         </select>
 
-        <label>Current Stats (after last ascension)</label>
+        <h3>Stats after last Ascension (Base)</h3>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
-            <div>
-                <label>ATK</label>
-                <input type="number" id="atk" value="183000">
-            </div>
-            <div>
-                <label>MAG</label>
-                <input type="number" id="mag" value="178000">
-            </div>
-            <div>
-                <label>SPI</label>
-                <input type="number" id="spi" value="178000">
-            </div>
-            <div>
-                <label>HP</label>
-                <input type="number" id="hp" value="480000">
-            </div>
+            <div><label>ATK</label><input type="number" id="base_atk" value="137000"></div>
+            <div><label>MAG</label><input type="number" id="base_mag" value="127000"></div>
+            <div><label>SPI</label><input type="number" id="base_spi" value="127000"></div>
+            <div><label>HP</label><input type="number" id="base_hp" value="331000"></div>
+        </div>
+
+        <h3>Current Stats (This Run)</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+            <div><label>ATK</label><input type="number" id="curr_atk" value="244000"></div>
+            <div><label>MAG</label><input type="number" id="curr_mag" value="232000"></div>
+            <div><label>SPI</label><input type="number" id="curr_spi" value="232000"></div>
+            <div><label>HP</label><input type="number" id="curr_hp" value="615000"></div>
         </div>
     </div>
 
-    <button onclick="calculateTargets()">Calculate Next Targets</button>
+    <button onclick="calculateTargets()">Calculate Next Ascension Targets</button>
 
     <div id="result" class="result">
-        <h2 style="margin-top:0; color:#00d4ff;">Recommendation for your next Ascension</h2>
-        
+        <h2 style="margin-top:0; color:#00d4ff;">Current Multiplier & Recommendation</h2>
         <div id="recommendation"></div>
-        
-        <h3>Target Stats by Multiplier</h3>
-        <table>
-            <tr>
-                <th>Multiplier</th>
-                <th>ATK</th>
-                <th>MAG</th>
-                <th>SPI</th>
-                <th>HP</th>
-                <th>Rating</th>
-            </tr>
-            <tr id="row20"></tr>
-            <tr id="row22"></tr>
-            <tr id="row25"></tr>
-        </table>
-
-        <div id="finalAdvice" style="margin-top:25px; padding:15px; background:#0f3460; border-radius:8px;"></div>
     </div>
 </div>
 
 <script>
 function calculateTargets() {
-    const ng = parseInt(document.getElementById('ng').value);
+    const ng = parseInt(document.getElementById('ng').value) || 0;
     const role = document.getElementById('role').value;
-    const atk = parseInt(document.getElementById('atk').value);
-    const mag = parseInt(document.getElementById('mag').value);
-    const spi = parseInt(document.getElementById('spi').value);
-    const hp = parseInt(document.getElementById('hp').value);
 
-    // Recommended multiplier based on NG+
-    let minMult = 1.8;
-    let maxMult = 2.2;
+    const base_atk = parseInt(document.getElementById('base_atk').value) || 1;
+    const base_hp = parseInt(document.getElementById('base_hp').value) || 1;
+
+    const curr_atk = parseInt(document.getElementById('curr_atk').value) || 0;
+    const curr_hp = parseInt(document.getElementById('curr_hp').value) || 0;
+
+    const mult_atk = (curr_atk / base_atk).toFixed(2);
+    const mult_hp = (curr_hp / base_hp).toFixed(2);
+
+    let minMult = 1.8, maxMult = 2.2;
     let advice = "";
 
-    if (ng >= 150) {
-        minMult = 2.4;
-        maxMult = 2.8;
-        advice = "Very high NG+. Be patient and aim for at least 2.4x.";
-    } else if (ng >= 100) {
-        minMult = 2.2;
-        maxMult = 2.5;
-        advice = "From NG+100 you should be more careful. Aim for 2.2x+.";
-    } else if (ng >= 50) {
-        minMult = 2.0;
-        maxMult = 2.3;
-        advice = "Good range — 2.1x–2.3x is usually solid.";
-    } else {
-        advice = "Early NG+ — you can ascend at 1.9x–2.1x if the run feels strong.";
-    }
+    if (ng >= 150) { minMult = 2.4; maxMult = 2.8; advice = "Very high NG+. Aim for strong runs (2.4x+)."; }
+    else if (ng >= 100) { minMult = 2.2; maxMult = 2.5; advice = "High NG+. Be patient — 2.2x+ recommended."; }
+    else if (ng >= 50) { minMult = 2.0; maxMult = 2.3; advice = "Mid NG+. 2.1x–2.3x is solid."; }
 
-    // Role adjustment
-    let atkMult = 1.0, magMult = 1.0, spiMult = 1.0, hpMult = 1.0;
-    if (role === "dd") {
-        atkMult = 1.05; magMult = 1.05;
-    } else if (role === "tank") {
-        hpMult = 1.08; spiMult = 1.03;
-    } else if (role === "healer") {
-        magMult = 1.05; spiMult = 1.05; hpMult = 1.03;
-    }
+    let rec = `<strong>Current Multiplier:</strong> ${mult_atk}x ATK | ${mult_hp}x HP<br><br>`;
+    rec += `<strong>Recommended for NG+${ng}:</strong> ${minMult.toFixed(1)}x – ${maxMult.toFixed(1)}x<br><br>`;
+    rec += advice;
 
-    // Calculate targets
-    const targets = {
-        "2.0x": {
-            atk: Math.round(atk * 2.0 * atkMult),
-            mag: Math.round(mag * 2.0 * magMult),
-            spi: Math.round(spi * 2.0 * spiMult),
-            hp: Math.round(hp * 2.0 * hpMult)
-        },
-        "2.2x": {
-            atk: Math.round(atk * 2.2 * atkMult),
-            mag: Math.round(mag * 2.2 * magMult),
-            spi: Math.round(spi * 2.2 * spiMult),
-            hp: Math.round(hp * 2.2 * hpMult)
-        },
-        "2.5x": {
-            atk: Math.round(atk * 2.5 * atkMult),
-            mag: Math.round(mag * 2.5 * magMult),
-            spi: Math.round(spi * 2.5 * spiMult),
-            hp: Math.round(hp * 2.5 * hpMult)
-        }
-    };
-
-    // Fill table
-    document.getElementById('row20').innerHTML = `
-        <td><strong>2.0x</strong></td>
-        <td>${targets["2.0x"].atk.toLocaleString()}</td>
-        <td>${targets["2.0x"].mag.toLocaleString()}</td>
-        <td>${targets["2.0x"].spi.toLocaleString()}</td>
-        <td>${targets["2.0x"].hp.toLocaleString()}</td>
-        <td class="${minMult <= 2.0 ? 'good' : 'warning'}">${minMult <= 2.0 ? "Recommended" : "Too early"}</td>
-    `;
-    document.getElementById('row22').innerHTML = `
-        <td><strong>2.2x</strong></td>
-        <td>${targets["2.2x"].atk.toLocaleString()}</td>
-        <td>${targets["2.2x"].mag.toLocaleString()}</td>
-        <td>${targets["2.2x"].spi.toLocaleString()}</td>
-        <td>${targets["2.2x"].hp.toLocaleString()}</td>
-        <td class="${minMult <= 2.2 ? 'good' : 'warning'}">${minMult <= 2.2 ? "Good" : "Too early"}</td>
-    `;
-    document.getElementById('row25').innerHTML = `
-        <td><strong>2.5x</strong></td>
-        <td>${targets["2.5x"].atk.toLocaleString()}</td>
-        <td>${targets["2.5x"].mag.toLocaleString()}</td>
-        <td>${targets["2.5x"].spi.toLocaleString()}</td>
-        <td>${targets["2.5x"].hp.toLocaleString()}</td>
-        <td class="good">Very Strong</td>
-    `;
-
-    // Recommendation text
-    let recText = `<strong>Recommended range for your next ascension:</strong><br>`;
-    recText += `Aim for <strong>${Math.round(minMult * 100)}% – ${Math.round(maxMult * 100)}%</strong> of your current stats.<br><br>`;
-    recText += `<strong>Practical target at 100 Wins:</strong><br>`;
-    recText += `ATK ≈ ${targets["2.2x"].atk.toLocaleString()} &nbsp;&nbsp; HP ≈ ${targets["2.2x"].hp.toLocaleString()}<br><br>`;
-    recText += advice;
-
-    document.getElementById('recommendation').innerHTML = recText;
-    document.getElementById('finalAdvice').innerHTML = `<strong>Tip:</strong> ${advice}`;
-    
+    document.getElementById('recommendation').innerHTML = rec;
     document.getElementById('result').classList.add('show');
 }
 </script>
