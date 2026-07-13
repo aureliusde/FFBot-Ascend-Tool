@@ -26,9 +26,6 @@
     <h1>FFBot Ascension Tool</h1>
 
     <div class="section">
-        <label>Current NG+</label>
-        <input type="number" id="ng" value="40" min="0">
-
         <label>Priority Stat</label>
         <select id="priority">
             <option value="balanced">Balanced (All Stats)</option>
@@ -58,7 +55,7 @@
     <button onclick="calculateTargets()">Calculate Targets & Recommendation</button>
 
     <div id="result" class="result">
-        <h2 style="margin-top:0; color:#00d4ff;">Target Stats & Recommendation</h2>
+        <h2 style="margin-top:0; color:#00d4ff;">Target Stats</h2>
         <div id="recommendation"></div>
         
         <table id="targetTable">
@@ -75,37 +72,7 @@
 </div>
 
 <script>
-// Load saved data on page load
-window.onload = function() {
-    const saved = localStorage.getItem('ffbot_data');
-    if (saved) {
-        const d = JSON.parse(saved);
-        document.getElementById('ng').value = d.ng || 40;
-        document.getElementById('priority').value = d.priority || 'balanced';
-        document.getElementById('base_atk').value = d.base_atk || 137000;
-        document.getElementById('base_mag').value = d.base_mag || 127000;
-        document.getElementById('base_spi').value = d.base_spi || 127000;
-        document.getElementById('base_hp').value = d.base_hp || 331000;
-    }
-};
-
-// Save data automatically
-function saveData() {
-    const data = {
-        ng: document.getElementById('ng').value,
-        priority: document.getElementById('priority').value,
-        base_atk: document.getElementById('base_atk').value,
-        base_mag: document.getElementById('base_mag').value,
-        base_spi: document.getElementById('base_spi').value,
-        base_hp: document.getElementById('base_hp').value
-    };
-    localStorage.setItem('ffbot_data', JSON.stringify(data));
-}
-
 function calculateTargets() {
-    saveData(); // Save every time you calculate
-
-    const ng = parseInt(document.getElementById('ng').value) || 0;
     const priority = document.getElementById('priority').value;
 
     const base_atk = parseInt(document.getElementById('base_atk').value) || 1;
@@ -118,9 +85,7 @@ function calculateTargets() {
 
     const hasCurrent = curr_atk > 0 && curr_hp > 0;
 
-    let minMult = ng >= 150 ? 2.4 : ng >= 100 ? 2.2 : ng >= 50 ? 2.0 : 1.8;
-    let maxMult = ng >= 150 ? 2.8 : ng >= 100 ? 2.5 : ng >= 50 ? 2.3 : 2.1;
-
+    // Priority adjustment
     let atkM = 1.0, magM = 1.0, spiM = 1.0, hpM = 1.0;
     if (priority === "atk") atkM = 1.08;
     else if (priority === "mag") magM = 1.08;
@@ -128,14 +93,14 @@ function calculateTargets() {
     else if (priority === "hp") hpM = 1.08;
 
     const targets = {
+        "1.5x": { atk: Math.round(base_atk * 1.5 * atkM), mag: Math.round(base_mag * 1.5 * magM), spi: Math.round(base_spi * 1.5 * spiM), hp: Math.round(base_hp * 1.5 * hpM) },
         "1.8x": { atk: Math.round(base_atk * 1.8 * atkM), mag: Math.round(base_mag * 1.8 * magM), spi: Math.round(base_spi * 1.8 * spiM), hp: Math.round(base_hp * 1.8 * hpM) },
         "2.0x": { atk: Math.round(base_atk * 2.0 * atkM), mag: Math.round(base_mag * 2.0 * magM), spi: Math.round(base_spi * 2.0 * spiM), hp: Math.round(base_hp * 2.0 * hpM) },
         "2.2x": { atk: Math.round(base_atk * 2.2 * atkM), mag: Math.round(base_mag * 2.2 * magM), spi: Math.round(base_spi * 2.2 * spiM), hp: Math.round(base_hp * 2.2 * hpM) },
-        "2.3x": { atk: Math.round(base_atk * 2.3 * atkM), mag: Math.round(base_mag * 2.3 * magM), spi: Math.round(base_spi * 2.3 * spiM), hp: Math.round(base_hp * 2.3 * hpM) },
         "2.5x": { atk: Math.round(base_atk * 2.5 * atkM), mag: Math.round(base_mag * 2.5 * magM), spi: Math.round(base_spi * 2.5 * spiM), hp: Math.round(base_hp * 2.5 * hpM) }
     };
 
-    let html = `<strong>Recommended for NG+${ng}:</strong> ${minMult.toFixed(1)}x – ${maxMult.toFixed(1)}x<br><br>`;
+    let html = `<strong>Target Stats for next Ascension:</strong><br><br>`;
 
     if (hasCurrent) {
         const mult_atk = (curr_atk / base_atk).toFixed(2);
@@ -157,9 +122,9 @@ function calculateTargets() {
             else if (currentVal >= targetVal - 0.15) { status = '⚠️ Okay'; color = 'yellow'; }
             else { status = '❌ Too early'; color = 'red'; }
         } else {
-            if (targetVal >= minMult && targetVal <= maxMult) { status = '✅ Recommended'; color = 'green'; }
-            else if (targetVal < minMult) { status = '❌ Too low'; color = 'red'; }
-            else { status = '⚠️ Possible'; color = 'yellow'; }
+            if (targetVal === 2.0 || targetVal === 2.2) { status = '✅ Recommended'; color = 'green'; }
+            else if (targetVal < 2.0) { status = '⚠️ Possible'; color = 'yellow'; }
+            else { status = '❌ High'; color = 'red'; }
         }
 
         tableHTML += `<tr class="${color}">
