@@ -75,7 +75,36 @@
 </div>
 
 <script>
+// Load saved data on page load
+window.onload = function() {
+    const saved = localStorage.getItem('ffbot_data');
+    if (saved) {
+        const d = JSON.parse(saved);
+        document.getElementById('ng').value = d.ng || 40;
+        document.getElementById('priority').value = d.priority || 'balanced';
+        document.getElementById('base_atk').value = d.base_atk || 137000;
+        document.getElementById('base_mag').value = d.base_mag || 127000;
+        document.getElementById('base_spi').value = d.base_spi || 127000;
+        document.getElementById('base_hp').value = d.base_hp || 331000;
+    }
+};
+
+// Save data automatically
+function saveData() {
+    const data = {
+        ng: document.getElementById('ng').value,
+        priority: document.getElementById('priority').value,
+        base_atk: document.getElementById('base_atk').value,
+        base_mag: document.getElementById('base_mag').value,
+        base_spi: document.getElementById('base_spi').value,
+        base_hp: document.getElementById('base_hp').value
+    };
+    localStorage.setItem('ffbot_data', JSON.stringify(data));
+}
+
 function calculateTargets() {
+    saveData(); // Save every time you calculate
+
     const ng = parseInt(document.getElementById('ng').value) || 0;
     const priority = document.getElementById('priority').value;
 
@@ -92,7 +121,6 @@ function calculateTargets() {
     let minMult = ng >= 150 ? 2.4 : ng >= 100 ? 2.2 : ng >= 50 ? 2.0 : 1.8;
     let maxMult = ng >= 150 ? 2.8 : ng >= 100 ? 2.5 : ng >= 50 ? 2.3 : 2.1;
 
-    // Priority adjustment
     let atkM = 1.0, magM = 1.0, spiM = 1.0, hpM = 1.0;
     if (priority === "atk") atkM = 1.08;
     else if (priority === "mag") magM = 1.08;
