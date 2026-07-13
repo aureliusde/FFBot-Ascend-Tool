@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>FFBot Ascension Tool</title>
 <style>
-    body { font-family: Arial, sans-serif; max-width: 1000px; margin: 40px auto; padding: 20px; background: #1a1a2e; color: #eee; }
+    body { font-family: Arial, sans-serif; max-width: 1100px; margin: 40px auto; padding: 20px; background: #1a1a2e; color: #eee; }
     h1 { color: #00d4ff; text-align: center; }
     .container { background: #16213e; padding: 30px; border-radius: 12px; box-shadow: 0 0 20px rgba(0,212,255,0.2); }
     label { display: block; margin: 10px 0 5px; font-weight: bold; color: #00d4ff; }
@@ -29,11 +29,13 @@
         <label>Current NG+</label>
         <input type="number" id="ng" value="40" min="0">
 
-        <label>Role</label>
-        <select id="role">
-            <option value="dd">Damage Dealer (DD)</option>
-            <option value="tank">Tank</option>
-            <option value="healer">Healer</option>
+        <label>Priorisierte Stat</label>
+        <select id="priority">
+            <option value="balanced">Balanced (ausgewogen)</option>
+            <option value="atk">ATK (Damage Fokus)</option>
+            <option value="mag">MAG (Magical Fokus)</option>
+            <option value="spi">SPI (Support Fokus)</option>
+            <option value="hp">HP (Tank / Survivability)</option>
         </select>
 
         <h3>Stats after last Ascension (Base)</h3>
@@ -56,14 +58,16 @@
     <button onclick="calculateTargets()">Calculate Targets & Recommendation</button>
 
     <div id="result" class="result">
-        <h2 style="margin-top:0; color:#00d4ff;">Targets & Recommendation</h2>
+        <h2 style="margin-top:0; color:#00d4ff;">Target Stats</h2>
         <div id="recommendation"></div>
         
         <table id="targetTable">
             <tr>
                 <th>Multiplier</th>
-                <th>ATK Target</th>
-                <th>HP Target</th>
+                <th>ATK</th>
+                <th>MAG</th>
+                <th>SPI</th>
+                <th>HP</th>
                 <th>Status</th>
             </tr>
         </table>
@@ -71,38 +75,13 @@
 </div>
 
 <script>
-// Load saved data
-function loadSavedData() {
-    const saved = localStorage.getItem('ffbot_last_input');
-    if (saved) {
-        const data = JSON.parse(saved);
-        document.getElementById('ng').value = data.ng || 40;
-        document.getElementById('role').value = data.role || 'dd';
-        document.getElementById('base_atk').value = data.base_atk || 137000;
-        document.getElementById('base_mag').value = data.base_mag || 127000;
-        document.getElementById('base_spi').value = data.base_spi || 127000;
-        document.getElementById('base_hp').value = data.base_hp || 331000;
-    }
-}
-
-// Save data
-function saveData() {
-    const data = {
-        ng: document.getElementById('ng').value,
-        role: document.getElementById('role').value,
-        base_atk: document.getElementById('base_atk').value,
-        base_mag: document.getElementById('base_mag').value,
-        base_spi: document.getElementById('base_spi').value,
-        base_hp: document.getElementById('base_hp').value
-    };
-    localStorage.setItem('ffbot_last_input', JSON.stringify(data));
-}
-
 function calculateTargets() {
-    saveData(); // Save input automatically
-
     const ng = parseInt(document.getElementById('ng').value) || 0;
+    const priority = document.getElementById('priority').value;
+
     const base_atk = parseInt(document.getElementById('base_atk').value) || 1;
+    const base_mag = parseInt(document.getElementById('base_mag').value) || 1;
+    const base_spi = parseInt(document.getElementById('base_spi').value) || 1;
     const base_hp = parseInt(document.getElementById('base_hp').value) || 1;
 
     const curr_atk = parseInt(document.getElementById('curr_atk').value) || 0;
@@ -113,12 +92,19 @@ function calculateTargets() {
     let minMult = ng >= 150 ? 2.4 : ng >= 100 ? 2.2 : ng >= 50 ? 2.0 : 1.8;
     let maxMult = ng >= 150 ? 2.8 : ng >= 100 ? 2.5 : ng >= 50 ? 2.3 : 2.1;
 
+    // Priority adjustment
+    let atkM = 1.0, magM = 1.0, spiM = 1.0, hpM = 1.0;
+    if (priority === "atk") atkM = 1.08;
+    else if (priority === "mag") magM = 1.08;
+    else if (priority === "spi") spiM = 1.08;
+    else if (priority === "hp") hpM = 1.08;
+
     const targets = {
-        "1.8x": { atk: Math.round(base_atk * 1.8), hp: Math.round(base_hp * 1.8) },
-        "2.0x": { atk: Math.round(base_atk * 2.0), hp: Math.round(base_hp * 2.0) },
-        "2.2x": { atk: Math.round(base_atk * 2.2), hp: Math.round(base_hp * 2.2) },
-        "2.3x": { atk: Math.round(base_atk * 2.3), hp: Math.round(base_hp * 2.3) },
-        "2.5x": { atk: Math.round(base_atk * 2.5), hp: Math.round(base_hp * 2.5) }
+        "1.8x": { atk: Math.round(base_atk * 1.8 * atkM), mag: Math.round(base_mag * 1.8 * magM), spi: Math.round(base_spi * 1.8 * spiM), hp: Math.round(base_hp * 1.8 * hpM) },
+        "2.0x": { atk: Math.round(base_atk * 2.0 * atkM), mag: Math.round(base_mag * 2.0 * magM), spi: Math.round(base_spi * 2.0 * spiM), hp: Math.round(base_hp * 2.0 * hpM) },
+        "2.2x": { atk: Math.round(base_atk * 2.2 * atkM), mag: Math.round(base_mag * 2.2 * magM), spi: Math.round(base_spi * 2.2 * spiM), hp: Math.round(base_hp * 2.2 * hpM) },
+        "2.3x": { atk: Math.round(base_atk * 2.3 * atkM), mag: Math.round(base_mag * 2.3 * magM), spi: Math.round(base_spi * 2.3 * spiM), hp: Math.round(base_hp * 2.3 * hpM) },
+        "2.5x": { atk: Math.round(base_atk * 2.5 * atkM), mag: Math.round(base_mag * 2.5 * magM), spi: Math.round(base_spi * 2.5 * spiM), hp: Math.round(base_hp * 2.5 * hpM) }
     };
 
     let html = `<strong>Recommended for NG+${ng}:</strong> ${minMult.toFixed(1)}x – ${maxMult.toFixed(1)}x<br><br>`;
@@ -129,7 +115,7 @@ function calculateTargets() {
         html += `<strong>Current Multiplier:</strong> ${mult_atk}x ATK | ${mult_hp}x HP<br><br>`;
     }
 
-    let tableHTML = `<tr><th>Multiplier</th><th>ATK Target</th><th>HP Target</th><th>Status</th></tr>`;
+    let tableHTML = `<tr><th>Multiplier</th><th>ATK</th><th>MAG</th><th>SPI</th><th>HP</th><th>Status</th></tr>`;
 
     Object.keys(targets).forEach(key => {
         const t = targets[key];
@@ -140,7 +126,7 @@ function calculateTargets() {
         if (hasCurrent) {
             const currentVal = parseFloat((curr_atk / base_atk).toFixed(2));
             if (currentVal >= targetVal + 0.1) { status = '✅ Ideal'; color = 'green'; }
-            else if (currentVal >= targetVal - 0.2) { status = '⚠️ Okay'; color = 'yellow'; }
+            else if (currentVal >= targetVal - 0.15) { status = '⚠️ Okay'; color = 'yellow'; }
             else { status = '❌ Too early'; color = 'red'; }
         } else {
             if (targetVal >= minMult && targetVal <= maxMult) { status = '✅ Recommended'; color = 'green'; }
@@ -151,29 +137,16 @@ function calculateTargets() {
         tableHTML += `<tr class="${color}">
             <td><strong>${key}</strong></td>
             <td>${t.atk.toLocaleString()}</td>
+            <td>${t.mag.toLocaleString()}</td>
+            <td>${t.spi.toLocaleString()}</td>
             <td>${t.hp.toLocaleString()}</td>
             <td>${status}</td>
         </tr>`;
     });
 
     document.getElementById('targetTable').innerHTML = tableHTML;
-    document.getElementById('recommendation').innerHTML = html;
     document.getElementById('result').classList.add('show');
 }
-
-// Load saved data when page opens
-window.onload = () => {
-    const saved = localStorage.getItem('ffbot_input');
-    if (saved) {
-        const d = JSON.parse(saved);
-        document.getElementById('ng').value = d.ng || 40;
-        document.getElementById('role').value = d.role || 'dd';
-        document.getElementById('base_atk').value = d.base_atk || 137000;
-        document.getElementById('base_mag').value = d.base_mag || 127000;
-        document.getElementById('base_spi').value = d.base_spi || 127000;
-        document.getElementById('base_hp').value = d.base_hp || 331000;
-    }
-};
 </script>
 </body>
 </html>
